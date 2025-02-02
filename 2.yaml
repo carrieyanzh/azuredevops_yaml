@@ -1,0 +1,32 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- none
+
+pool:
+  name: self-raspberry0201
+
+variables:
+  rgName: "daslearning-rg-01"
+  location: "Central US"
+  storageAcName: "learningdevopscarrie"
+  containerName: "azdvopscarrie"
+
+steps:
+  - task: Bash@3
+    displayName: "Print Storage Details"
+    inputs:      
+      targetType: 'inline'
+      script: |
+        echo "Storage Account Name: $(storageAcName)"     
+        echo "File uploaded successfully!"
+
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'myconnection0202'
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: 'echo "Storage Account Name: $(storageAcName)"'

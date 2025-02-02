@@ -1,1 +1,45 @@
+trigger:
+- none
 
+pool:
+  name: self-raspberry0201
+
+variables:
+  rgName: "daslearning-rg-01"
+  location: "Central US"
+  storageAcName: "learningdevopscarrie"
+  containerName: "azdvopscarrie"
+
+steps:
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'myserviceconnection'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az login --service-principal -u '571d4486-dbfd-4ed7-b3f1-f90e2df7651c' -p 'p6Q8Q~6ctBaAVbHrERKJ1Fc5LN2h_zOlZT9TBaEZ' --tenant 'a8225c05-9505-402f-8517-253b3533402f'
+      az account list --output table
+      az account set --subscription 'fcecc27b-6c00-431b-9002-2a7279d13ea4'
+      az role assignment list --assignee 571d4486-dbfd-4ed7-b3f1-f90e2df7651c --all
+
+      # Debug output
+      echo "Storage Account Name: $storageAcName"
+      echo "Resource Group Name: $rgName"
+      echo "Container Name: $containerName"
+
+      # Get storage account key
+      #STORAGE_KEY=$(az storage account keys list --resource-group "$rgName" --account-name "$storageAcName" --query "[0].value" --output tsv)
+      #echo "Storage Key: $STORAGE_KEY"  # For debugging, remove in production
+
+      # Create a container
+      #az storage container create --name "$containerName" --account-name "$storageAcName" --account-key "$STORAGE_KEY" 
+      az storage blob upload --account-name "learningdevopscarrie" \
+         --container-name "azdvopscarrie" \
+         --name "ep2.txt" \
+         --file "./azDevOps/ep-2/dataFiles/ep2.txt" \
+         --account-key "7Ho9yuBMXiAyuAHv4OFKBF8jkGmUP2mOXCjLSHUJuYxNGjU1b3O3uuSsfu/5LoHtg3bQlPjbOrWm+AStuSQQFQ==" || { echo "Failed to upload file"; exit 1; }
+
+      echo "File uploaded successfully!"

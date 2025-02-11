@@ -1,0 +1,152 @@
+Dependency scanning helps identify vulnerabilities in third-party libraries and dependencies used in your project. Azure DevOps supports several tools for dependency scanning, and the configuration can vary depending on the programming language and the tool you choose.
+
+Common Tools for Dependency Scanning:
+OWASP Dependency-Check: Java, .NET, Node.js
+WhiteSource Bolt: Supports multiple languages
+Snyk: Supports multiple languages
+GitHub Dependabot: Works with GitHub but can be integrated with Azure
+SonarQube: Static code analysis and dependency scanning
+Bandit: For Python
+npm audit: For Node.js
+Example Configurations
+1. OWASP Dependency-Check (Java Example)
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UseJavaVersion@1
+  inputs:
+    versionSpec: '11'
+    jdkArchitecture: 'x64'
+
+- script: |
+    curl -L -o dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v7.0.4/dependency-check-7.0.4-release.zip
+    unzip dependency-check.zip -d dependency-check
+    ./dependency-check/bin/dependency-check.sh --project MyJavaProject --scan ./ --format HTML --out ./dependency-report
+  displayName: 'Run OWASP Dependency-Check'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: './dependency-report'
+    ArtifactName: 'DependencyReport'
+2. WhiteSource Bolt (Multiple Languages)
+Install the WhiteSource Bolt extension from the Azure DevOps marketplace.
+Add the following task in your YAML:
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Whitesource Bolt@20
+  inputs:
+    cwd: '$(Build.SourcesDirectory)'
+3. Snyk (Multiple Languages)
+Install the Snyk extension from the Azure DevOps marketplace.
+Configure in azure-pipelines.yml:
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: SnykSecurityScan@1
+  inputs:
+    serviceConnectionEndpoint: 'SnykServiceConnection'
+    testType: 'app'
+    monitorWhen: 'always'
+    failOnIssues: true
+4. npm audit (Node.js Example)
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '16.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+    npm audit --audit-level=high
+  displayName: 'Run npm audit'
+5. Bandit (Python Example)
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+    addToPath: true
+
+- script: |
+    pip install bandit
+    bandit -r . -f html -o bandit-report.html
+  displayName: 'Run Bandit for Python Security Scan'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: './bandit-report.html'
+    ArtifactName: 'PythonSecurityReport'
+6. SonarQube (Static Code Analysis & Dependency Scanning)
+Install the SonarQube extension in Azure DevOps.
+Configure in YAML:
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: SonarQubePrepare@5
+  inputs:
+    SonarQube: 'SonarQubeServiceConnection'
+    scannerMode: 'CLI'
+    configMode: 'manual'
+    cliProjectKey: 'my_project_key'
+    cliSources: '.'
+
+- script: |
+    ./gradlew build
+  displayName: 'Build Project'
+
+- task: SonarQubeAnalyze@5
+
+- task: SonarQubePublish@5
+  inputs:
+    pollingTimeoutSec: '300'
+Tips:
+Failing the Build: Set failOnIssues: true in tools like Snyk or npm audit to fail the pipeline if vulnerabilities are detected.
+Artifact Publishing: Use PublishBuildArtifacts@1 to collect and view reports post-build.
+Conditional Execution: Use condition: in YAML to run dependency scans only for specific branches or PRs.
+Let me know if you need help with a speci

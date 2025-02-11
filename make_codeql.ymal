@@ -1,0 +1,230 @@
+CodeQL is a powerful static code analysis tool that helps identify security vulnerabilities in your codebase. While it is tightly integrated with GitHub Actions, you can still configure CodeQL in Azure DevOps using custom YAML pipelines.
+
+Here's a guide on how to set up CodeQL in Azure DevOps for different programming languages like Java, JavaScript/TypeScript, Python, C/C++, and C#.
+
+1. Prerequisites
+Install CodeQL CLI: CodeQL CLI is needed to run CodeQL scans.
+Setup Azure DevOps Service Connection (if required): For uploading results to GitHub or another service, configure service connections.
+Azure DevOps Agent: Use ubuntu-latest or windows-latest for CodeQL compatibility.
+2. General Steps to Configure CodeQL in Azure DevOps
+Download CodeQL CLI
+Initialize the Database
+Perform the Scan
+Generate Reports
+Publish Artifacts
+3. Sample YAML Configurations by Language
+A. Java CodeQL Configuration
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Install Java
+- task: UseJavaVersion@1
+  inputs:
+    versionSpec: '11'
+    jdkArchitecture: 'x64'
+
+# Download CodeQL CLI
+- script: |
+    curl -L -o codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
+    unzip codeql.zip -d codeql
+  displayName: 'Download CodeQL CLI'
+
+# Initialize CodeQL Database
+- script: |
+    ./codeql/codeql database create java-db --language=java --source-root=.
+  displayName: 'Initialize CodeQL Database for Java'
+
+# Run CodeQL Analysis
+- script: |
+    ./codeql/codeql database analyze java-db --format=sarifv2.1.0 --output=java-codeql-results.sarif
+  displayName: 'Run CodeQL Analysis for Java'
+
+# Publish the SARIF Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'java-codeql-results.sarif'
+    ArtifactName: 'CodeQL-Report-Java'
+B. JavaScript/TypeScript CodeQL Configuration
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Install Node.js
+- task: NodeTool@0
+  inputs:
+    versionSpec: '16.x'
+
+# Download CodeQL CLI
+- script: |
+    curl -L -o codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
+    unzip codeql.zip -d codeql
+  displayName: 'Download CodeQL CLI'
+
+# Initialize CodeQL Database for JavaScript
+- script: |
+    ./codeql/codeql database create js-db --language=javascript --source-root=.
+  displayName: 'Initialize CodeQL Database for JavaScript'
+
+# Run CodeQL Analysis
+- script: |
+    ./codeql/codeql database analyze js-db --format=sarifv2.1.0 --output=js-codeql-results.sarif
+  displayName: 'Run CodeQL Analysis for JavaScript'
+
+# Publish the SARIF Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'js-codeql-results.sarif'
+    ArtifactName: 'CodeQL-Report-JavaScript'
+C. Python CodeQL Configuration
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Install Python
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+
+# Download CodeQL CLI
+- script: |
+    curl -L -o codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
+    unzip codeql.zip -d codeql
+  displayName: 'Download CodeQL CLI'
+
+# Initialize CodeQL Database for Python
+- script: |
+    ./codeql/codeql database create python-db --language=python --source-root=.
+  displayName: 'Initialize CodeQL Database for Python'
+
+# Run CodeQL Analysis
+- script: |
+    ./codeql/codeql database analyze python-db --format=sarifv2.1.0 --output=python-codeql-results.sarif
+  displayName: 'Run CodeQL Analysis for Python'
+
+# Publish the SARIF Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'python-codeql-results.sarif'
+    ArtifactName: 'CodeQL-Report-Python'
+D. C/C++ CodeQL Configuration
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Install build-essential for C/C++ projects
+- script: |
+    sudo apt-get update
+    sudo apt-get install -y build-essential
+  displayName: 'Install C/C++ Build Tools'
+
+# Download CodeQL CLI
+- script: |
+    curl -L -o codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
+    unzip codeql.zip -d codeql
+  displayName: 'Download CodeQL CLI'
+
+# Initialize CodeQL Database for C++
+- script: |
+    ./codeql/codeql database create cpp-db --language=cpp --command="make" --source-root=.
+  displayName: 'Initialize CodeQL Database for C++'
+
+# Run CodeQL Analysis
+- script: |
+    ./codeql/codeql database analyze cpp-db --format=sarifv2.1.0 --output=cpp-codeql-results.sarif
+  displayName: 'Run CodeQL Analysis for C++'
+
+# Publish the SARIF Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'cpp-codeql-results.sarif'
+    ArtifactName: 'CodeQL-Report-Cpp'
+E. C# (.NET) CodeQL Configuration
+yaml
+Copy
+Edit
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+# Install .NET SDK
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '6.x'
+
+# Download CodeQL CLI
+- powershell: |
+    Invoke-WebRequest -Uri https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-win64.zip -OutFile codeql.zip
+    Expand-Archive codeql.zip -DestinationPath codeql
+  displayName: 'Download CodeQL CLI'
+
+# Initialize CodeQL Database for C#
+- script: |
+    .\codeql\codeql.exe database create cs-db --language=csharp --command="dotnet build" --source-root=.
+  displayName: 'Initialize CodeQL Database for C#'
+
+# Run CodeQL Analysis
+- script: |
+    .\codeql\codeql.exe database analyze cs-db --format=sarifv2.1.0 --output=cs-codeql-results.sarif
+  displayName: 'Run CodeQL Analysis for C#'
+
+# Publish the SARIF Report
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'cs-codeql-results.sarif'
+    ArtifactName: 'CodeQL-Report-CSharp'
+4. Viewing Results
+The output files (in SARIF format) can be downloaded from Azure DevOps under the Artifacts section.
+You can upload SARIF files to GitHub Security if needed or visualize them using tools like SARIF Viewer extensions.
+5. Optional Enhancements
+Fail the Build on Vulnerabilities:
+
+yaml
+Copy
+Edit
+- script: |
+    if grep -q '"level": "error"' *.sarif; then
+      echo "Security vulnerabilities found!"
+      exit 1
+    fi
+  displayName: 'Fail Build if Vulnerabilities are Detected'
+Schedule Regular Scans:
+
+yaml
+Copy
+Edit
+schedules:
+  - cron: "0 2 * * *"  # Runs at 2 AM daily
+    displayName: 'Daily CodeQL Scan'
+    branches:
+      include:
+        - main
+Let me know if you need further customizations for a specific environment or CI/CD setup! 😊

@@ -1,0 +1,27 @@
+jobs:
+- job: Job_1
+  displayName: Agent job 1
+  pool:
+    name: myselfhostedraspberrypi
+  steps:
+  - checkout: self
+    fetchDepth: 1
+  - task: Npm@1
+    displayName: npm install
+    inputs:
+      verbose: false
+  - task: Npm@1
+    displayName: npm customer
+    inputs:
+      command: custom
+      verbose: false
+      customCommand: run build
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: drop'
+    inputs:
+      PathtoPublish: build
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Pipeline Artifact
+    inputs:
+      artifact: drop
+      path: $(Pipeline.Workspace)/download
